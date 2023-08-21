@@ -1,8 +1,11 @@
 package dots.of.lots.category.notice.controller;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import dots.of.lots.category.notice.domain.Notice;
 import dots.of.lots.category.notice.domain.PageInfo;
@@ -54,7 +58,7 @@ public class NoticeController {
 	}
 	
 	public PageInfo getPageInfo(int currentPage, int totalCount) {
-		PageInfo pi = null;
+		PageInfo pInfo = null;
 		int recordCountPerPage = 5;
 		int naviCountPerPage = 3;
 		int naviTotalCount;
@@ -72,8 +76,8 @@ public class NoticeController {
 			endNavi = naviTotalCount;
 		}
 		
-		pi = new PageInfo(currentPage, recordCountPerPage, naviCountPerPage, startNavi, endNavi, totalCount, naviTotalCount);
-		return pi;
+		pInfo = new PageInfo(currentPage, recordCountPerPage, naviCountPerPage, startNavi, endNavi, totalCount, naviTotalCount);
+		return pInfo;
 	}
 	
 	public String getNaviInfo(int currentPage, int totalCount) {
@@ -93,7 +97,7 @@ public class NoticeController {
 			result.append("<a href='/notice/list.do?currentPage="+(pi.getStartNavi()-1)+"'> < </a> ");
 		}
 		for(int i = pi.getStartNavi(); i <= pi.getEndNavi(); i++) {
-			result.append("<a href='/notice/list.do?currentPage=" + i + "'>" + i + "</a>&nbsp;&nbsp;");	// 범위 만드는 html 태그  // &nbsp; 는 띄어쓰기
+			result.append("<a href='/notice/list.do?currentPage=" + i + "'>" + i + "</a>");	// 범위 만드는 html 태그  // &nbsp; 는 띄어쓰기
 		}
 		if(needNext) {
 			result.append("<a href='/notice/list.do?currentPage="+(pi.getEndNavi()+1)+"'> > </a>");
@@ -107,7 +111,7 @@ public class NoticeController {
 	public String searchNoticeList(
 			@RequestParam("searchCondition") String searchCondition
 			, @RequestParam("searchKeyword") String searchKeyword
-			, @RequestParam(value="page", required=false, defaultValue="1") Integer currentPage
+			, @RequestParam(value="currentPage", required=false, defaultValue="1") Integer currentPage
 			, Model model) {
 		
 		Map<String, String> paramMap = new HashMap<String, String>();
@@ -116,6 +120,7 @@ public class NoticeController {
 		
 		int totalCount = service.getListCount(paramMap);
 		PageInfo pInfo = this.getPageInfo(currentPage, totalCount);
+		String result = this.getNaviInfo(currentPage, totalCount);
 		
 		List<Notice> searchList = service.searchNoticesByKeyword(pInfo, paramMap);		
 		
@@ -124,6 +129,7 @@ public class NoticeController {
 			model.addAttribute("searchKeyword", searchKeyword);
 			model.addAttribute("pInfo", pInfo);
 			model.addAttribute("sList", searchList);
+			model.addAttribute("navi", result);
 			return "category/notice/notice-search";
 		} else {
 			model.addAttribute("msg", "데이터 조회가 완료되지 않았습니다.");
@@ -167,14 +173,30 @@ public class NoticeController {
 	
 	@RequestMapping(value="/notice/insert.do", method=RequestMethod.POST)
 	public String insertNotice(
-			@RequestParam("noticeSubject") String noticeSubject
-			, @RequestParam("noticeContent") String noticeContent
+			@ModelAttribute Notice notice
+			, @RequestParam(value="uploadFile", required=false) MultipartFile uploadFile
+			, HttpServletRequest request
 			, Model model) {
 		
-		Notice notice = new Notice(noticeSubject, noticeContent);
-		
 		try {
-			int result = service.insertNotice(notice);
+			if(!uploadFile.getOriginalFilename().equals("")) {
+			String fileName = uploadFile.getOriginalFilename();
+			String root = request.getSession().getServletContext().getRealPath("resources");
+			String saveFolder = root + "\\nuploadFiles";
+			File folder = new File(saveFolder);
+			if(!folder.exists()) {
+				folder.mkdir();
+			}
+			String savePath = saveFolder + "\\" + fileName;
+			File file = new File(savePath);
+			uploadFile.transferTo(file);
+			long fileLength = uploadFile.getSize();
+			
+			notice.setNoticeFileName(fileName);
+			notice.setNoticeFIlePath(savePath);
+			notice.setNoticeFileLength(fileLength);
+		}
+		int result = service.insertNotice(notice);
 			
 			if(result > 0) {
 				return "redirect:/notice/list.do";

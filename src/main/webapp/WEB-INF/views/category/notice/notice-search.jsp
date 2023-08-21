@@ -59,7 +59,7 @@
 					<c:forEach var="notice" items="${ sList }">
 					<tr>
 						<td><a href="/notice/detail.do?noticeNo=${ notice.noticeNo }">${ notice.noticeSubject }</a></td>
-						<td><fmt:formatDate pattern="yyyy-MM-dd" value="${ notice.noticeDate }"/></td>
+						<td><fmt:formatDate pattern="yyyy-MM-dd" value="${ notice.nUpdateDate }"/></td>
 					</tr>
 					</c:forEach>
                   </table>
@@ -83,12 +83,15 @@
                </div>
 
                <section class="dots_Noticebutton">
-					<c:url var="pageUrl" value="/notice/search.kh">
-						<c:param name="page" 			value="${ p }"></c:param>
-						<c:param name="searchCondition" value="${ searchCondition }"></c:param>
-						<c:param name="searchKeyword" 	value="${ searchKeyword }"></c:param>
-					</c:url>
-					<a href="${pageUrl}">${ navi }</a>&nbsp;
+               		<c:forEach begin="${ pInfo.startNavi }" end="${ pInfo.endNavi }" var="p">
+						<c:url var="pageUrl" value="/notice/search.do">
+							<c:param name="currentPage" 	value="${ p }"></c:param>
+							<c:param name="searchCondition" value="${ searchCondition }"></c:param>
+							<c:param name="searchKeyword" 	value="${ searchKeyword }"></c:param>
+						</c:url>
+						<a href="${pageUrl}">${ p }</a>
+					</c:forEach>
+<%-- 					${ navi } --%>
                </section>
             </section>
          </main>

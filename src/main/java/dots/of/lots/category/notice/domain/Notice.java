@@ -8,14 +8,16 @@ public class Notice {
 	private String noticeSubject;
 	private String noticeContent;
 	private String noticeWriter;
-	private Timestamp noticeDate;
-	private Timestamp updateDate;
-	private int viewCount;
+	private Timestamp nCreateDate;
+	private Timestamp nUpdateDate;
+	private String noticeFileName;
+	private String noticeFilePath;
+	private long noticeFileLength;
 	
 	public Notice() {
 		super();
 	}
-	
+
 	public Notice(String noticeSubject, String noticeContent) {
 		super();
 		this.noticeSubject = noticeSubject;
@@ -28,7 +30,7 @@ public class Notice {
 		this.noticeSubject = noticeSubject;
 		this.noticeContent = noticeContent;
 	}
-
+	
 	public int getNoticeNo() {
 		return noticeNo;
 	}
@@ -53,30 +55,43 @@ public class Notice {
 	public void setNoticeWriter(String noticeWriter) {
 		this.noticeWriter = noticeWriter;
 	}
-	public Timestamp getNoticeDate() {
-		return noticeDate;
+	public Timestamp getnCreateDate() {
+		return nCreateDate;
 	}
-	public void setNoticeDate(Timestamp noticeDate) {
-		this.noticeDate = noticeDate;
+	public void setnCreateDate(Timestamp nCreateDate) {
+		this.nCreateDate = nCreateDate;
 	}
-	public Timestamp getUpdateDate() {
-		return updateDate;
+	public Timestamp getnUpdateDate() {
+		return nUpdateDate;
 	}
-	public void setUpdateDate(Timestamp updateDate) {
-		this.updateDate = updateDate;
+	public void setnUpdateDate(Timestamp nUpdateDate) {
+		this.nUpdateDate = nUpdateDate;
 	}
-	public int getViewCount() {
-		return viewCount;
+	public String getNoticeFileName() {
+		return noticeFileName;
 	}
-	public void setViewCount(int viewCount) {
-		this.viewCount = viewCount;
+	public void setNoticeFileName(String noticeFileName) {
+		this.noticeFileName = noticeFileName;
 	}
-
-	@Override
-	public String toString() {
-		return "공지 [글번호=" + noticeNo + ", 제목=" + noticeSubject + ", 내용=" + noticeContent
-				+ ", 작성자=" + noticeWriter + ", 작성일=" + noticeDate + ", 수정일=" + updateDate
-				+ ", 조회수=" + viewCount + "]";
+	public String getNoticeFIlePath() {
+		return noticeFilePath;
 	}
+	public void setNoticeFIlePath(String noticeFIlePath) {
+		this.noticeFilePath = noticeFIlePath;
+	}
+	public long getNoticeFileLength() {
+		return noticeFileLength;
+	}
+	public void setNoticeFileLength(long noticeFileLength) {
+		this.noticeFileLength = noticeFileLength;
+	}
+	
+//	@Override
+//	public String toString() {
+//		return "공지 [번호=" + noticeNo + ", 제목=" + noticeSubject + ", 내용=" + noticeContent
+//				+ ", 작성자=" + noticeWriter + ", 생성일=" + nCreateDate + ", 수정일=" + nUpdateDate
+//				+ ", 파일이름=" + noticeFileName + ", 파일패스=" + noticeFilePath + ", 파일길이="
+//				+ noticeFileLength + "]";
+//	}
 	
 }

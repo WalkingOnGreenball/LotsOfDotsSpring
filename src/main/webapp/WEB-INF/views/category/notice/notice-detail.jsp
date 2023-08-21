@@ -79,7 +79,8 @@
 <!--                      </p> -->
                   </div>
                   <div class="dots_NoticeSubDate">
-                     <fmt:formatDate pattern="yyyy-MM-dd" value="${ notice.noticeDate }"/>
+                     <c:if test="${ !empty notice.noticeFileName }">첨부파일 있음 /</c:if>
+                     <fmt:formatDate pattern="yyyy-MM-dd" value="${ notice.nUpdateDate }"/>
                   </div>
                </section>
                <div class="dots_NoticeList">

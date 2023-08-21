@@ -5,19 +5,25 @@
 <mapper namespace="NoticeMapper">
 
   <resultMap type="Notice" id="noticeResultMap">
-  
   	<id		property="noticeNo" 		column="NOTICE_NO"/>
   	<result property="noticeSubject" 	column="NOTICE_SUBJECT"/>
   	<result property="noticeContent" 	column="NOTICE_CONTENT"/>
   	<result property="noticeWriter" 	column="NOTICE_WRITER"/>
-  	<result property="noticeDate" 		column="NOTICE_DATE"/>
-  	<result property="updateDate" 		column="UPDATE_DATE"/>
-  	<result property="viewCount" 		column="VIEW_COUNT"/>
-  
+  	<result property="nCreateDate" 		column="N_CREATE_DATE"/>
+  	<result property="nUpdateDate" 		column="N_UPDATE_DATE"/>
+  	<result property="noticeFileName" 	column="NOTICE_FILENAME"/>
+  	<result property="noticeFilePath" 	column="NOTICE_FILEPATH"/>
+  	<result property="noticeFileLength" column="NOTICE_FILELENGTH"/>
   </resultMap>
 
   <insert id="insertNotice">
-  	INSERT INTO NOTICE_TBL VALUES(SEQ_NOTICENO.NEXTVAL, #{ noticeSubject }, #{ noticeContent }, 'admin', DEFAULT, DEFAULT, DEFAULT)
+  	INSERT INTO NOTICE_TBL VALUES (SEQ_NOTICE_NO.NEXTVAL, #{ noticeSubject }, #{ noticeContent }, 'admin', DEFAULT, DEFAULT, 
+  	<if test="noticeFileName == null">
+  	NULL, NULL, NULL)
+  	</if>
+  	<if test="noticeFileName != null">
+  	#{ noticeFileName }, #{ noticeFilePath }, #{ noticeFileLength })
+  	</if>
   </insert>
   
   <update id="updateNotice">

@@ -78,7 +78,7 @@
 <!--                         </p> -->
                      </div>
                      <div class="dots_NoticeSubDate">
-<%--                         ${ notice.noticeDate } --%>
+<%--                         ${ notice.nUpdateDate } --%>
                      </div>
                   </section>
                   <div class="dots_NoticeList">
