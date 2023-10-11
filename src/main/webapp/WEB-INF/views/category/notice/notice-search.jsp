@@ -76,22 +76,17 @@
 						   <option value="title" 	<c:if test="${ searchCondition == 'title'}">selected</c:if>>제목</option>
 						   <option value="content" 	<c:if test="${ searchCondition == 'content'}">selected</c:if>>내용</option>
                         </select>
-                        <input type="text" name="searchKeyword" placeholder="검색어를 입력하세요.">
+                        <input type="text" name="searchKeyword" placeholder="검색어를 입력하세요." value="${ searchKeyword }">
                         <input type="submit" value="검색">
                      </form>
                   </div>
                </div>
 
                <section class="dots_Noticebutton">
-               		<c:forEach begin="${ pInfo.startNavi }" end="${ pInfo.endNavi }" var="p">
-						<c:url var="pageUrl" value="/notice/search.do">
-							<c:param name="currentPage" 	value="${ p }"></c:param>
-							<c:param name="searchCondition" value="${ searchCondition }"></c:param>
-							<c:param name="searchKeyword" 	value="${ searchKeyword }"></c:param>
-						</c:url>
-						<a href="${pageUrl}">${ p }</a>
-					</c:forEach>
-<%-- 					${ navi } --%>
+               		<c:if test="">
+               		
+               		</c:if>
+					${ navi }
                </section>
             </section>
          </main>

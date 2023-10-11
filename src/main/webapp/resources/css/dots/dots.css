@@ -53,6 +53,8 @@
                 padding: 10px;
             }
                 .update_Accent {
+                    padding-left: 3px;
+                    padding-right: 3px;
                     background-color: #c7e3ff;
                     border-radius: 10px;
                 }

@@ -49,36 +49,25 @@
                <section class="dots_NoticeTitle">
                   <a href="/notice/list.do?currentPage=1">Notice</a>
                </section>
-               <form action="/notice/modify.do" method="post">
+               <form action="/notice/modify.do" method="post" enctype="multipart/form-data">
                   <input type="hidden" name="noticeNo" value="${ notice.noticeNo }">
+                  <input type="hidden" name="noticeWriter" value="${ notice.noticeWriter }">
+                  <input type="hidden" name="noticeFileName" value="${ notice.noticeFileName }">
+                  <input type="hidden" name="noticeFileName" value="${ notice.noticeFileRename }">
+                  <input type="hidden" name="noticeFilePath" value="${ notice.noticeFilePath }">
+                  <input type="hidden" name="noticeFileLength" value="${ notice.noticeFileLength }">
+
                   <section class="dots_NoticeTableBox">
                      <div class="dots_NoticeSubTitle">
                         <input type="text" name="noticeSubject" id="" value="${ notice.noticeSubject }">
                      </div>
                      <div class="dots_NoticeSubWrite">
                            <textarea name="noticeContent" id="" cols="154" rows="25">${ notice.noticeContent }</textarea>
-<!--                         <p> -->
-<!--                            후원일정 안내드립니다. -->
-<!--                            <br> -->
-<!--                            <br> -->
-<!--                            <br> -->
-<!--                            · 5/15 1차 가제본 및 샘플 제작 <br> -->
-<!--                            · 6/5 펀딩 시작일 <br> -->
-<!--                            · 6/15 2차 가제본 및 굿즈 샘플 보완 작업 <br> -->
-<!--                            · 7/5 펀딩 종료일 <br> -->
-<!--                            · 7/22 최종 인쇄 및 제본, 굿즈 발주 <br> -->
-<!--                            · 7/31 포장 및 배송 접수 <br> -->
-<!--                            · 8/7 리워드 수령 <br> -->
-<!--                            <br> -->
-<!--                            <br> -->
-<!--                            자세한 내용은 링크를 확인해주세요! -->
-<!--                            <br> -->
-<!--                            <br> -->
-<!--                            <a href="https://tumblbug.com/lotsofdotsproject1">https://tumblbug.com/lotsofdotsproject1</a> -->
-<!--                         </p> -->
                      </div>
-                     <div class="dots_NoticeSubDate">
-<%--                         ${ notice.nUpdateDate } --%>
+                     <div class="dots_NoticeUploadFile">
+<!--                      	<label>첨부파일</label> -->
+                     	<a href="../resources/nuploadFiles/${ notice.noticeFileRename }" download> ${ notice.noticeFileName } /&nbsp;</a>
+						<input type="file" name="uploadFile">
                      </div>
                   </section>
                   <div class="dots_NoticeList">

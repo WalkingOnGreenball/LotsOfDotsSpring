@@ -39,6 +39,12 @@ public class NoticeServiceImpl implements NoticeService{
 	}
 
 	@Override
+	public int deleteNotice(Notice notice) {
+		int result = nStore.deleteNotice(sqlSession, notice);
+		return result;
+	}
+
+	@Override
 	public Notice selectOneByNo(int noticeNo) {
 		Notice notice = nStore.selectOneByNo(sqlSession, noticeNo);
 		return notice;

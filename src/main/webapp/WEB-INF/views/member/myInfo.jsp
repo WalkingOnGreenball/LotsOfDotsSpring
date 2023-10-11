@@ -52,10 +52,11 @@
                      <form action="/member/update.do" method="post">
                         <div class="login_idPw">
                            ID : <input type="text" name=memberId placeholder=" ${ member.memberId }" class="Login_Blank" required value="${ member.memberId }"readonly><br>
-                           PW : <input type="password" name="memberPw" placeholder=" ${ member.memberPw }" class="Login_Blank" required value="${ member.memberPw }"><br>
-                           PW-Check : <input type="password" name="memberPwCheck" placeholder=" ${ member.memberPwCheck }" class="Login_Blank" required value="${ member.memberPwCheck }"><br>
+                           PW : <input type="password" name="memberPw" placeholder="비밀번호를 입력해주세요." class="Login_Blank" required><br>
+                           PW-Check : <input type="password" name="memberPwCheck" placeholder="비밀번호를 입력해주세요." class="Login_Blank" required><br>
                            NAME : <input type="text" name="memberName" placeholder=" ${ member.memberName }" class="Login_Blank" required value="${ member.memberName }"readonly><br>
-                           ADDRESS : <input type="text" name="memberAddress"  placeholder=" ${ member.memberAddress }" class="Login_Blank" required value="${ member.memberAddress }"><br>
+                           ADDRESS : <input type="text" id="memberAddress" name="memberAddress"  placeholder=" ${ member.memberAddress }" class="Login_Blank" required value="${ member.memberAddress }"><br>
+                           <input type="button" onclick="sample4_execDaumPostcode();" value="우편번호 찾기" class="Login_Blank findAddressButton"><br>
                            E-MAIL : <input type="email" name="memberEmail"  placeholder=" ${ member.memberEmail }" class="Login_Blank" required value="${ member.memberEmail }"><br>
                            PHONE : <input type="tel" name="memberPhone" placeholder=" ${ member.memberPhone }" class="Login_Blank" required value="${ member.memberPhone }"><br>
                            <div class="sign_radioBox">
@@ -85,6 +86,16 @@
          <!-- footer -->
          <jsp:include page="/WEB-INF/views/include/footer.jsp"></jsp:include>
       </div>
+      <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+      <script>
+         function sample4_execDaumPostcode() {
+            new daum.Postcode({
+               oncomplete : function(data) {
+                  document.querySelector("#memberAddress").value = "(" + data.zonecode + ") " + data.roadAddress + ", " + data.buildingName;
+               }
+            }).open();
+         }
+      </script>
       <script>
          document.addEventListener("DOMContentLoaded", () => {
             document.querySelector("#shopping_bag_icon").addEventListener("click", () => {
@@ -97,10 +108,10 @@
             // /member/delete.do?memberId=${ sessionScope.memberId }
          });
          function checkDelete() {
-             const memberId = '${ sessionScope.memberId }';
-             if(confirm("탈퇴하시겠습니까?")) {
-                 location.href = "/member/delete.do?memberId=" + memberId;
-             }
+            const memberId = '${ sessionScope.memberId }';
+            if(confirm("탈퇴하시겠습니까?")) {
+               location.href = "/member/delete.do?memberId=" + memberId;
+            }
          }
       </script>
    </body>

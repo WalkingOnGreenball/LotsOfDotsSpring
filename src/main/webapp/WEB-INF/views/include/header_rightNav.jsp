@@ -33,8 +33,14 @@
             <c:if test= "${ memberId eq null }">
                 <a href="/member/login.do"><img src="/resources/images/Icons/user_icon.png" alt="login" class="icons"></a>
             </c:if>
+<%--             <c:if test="${ memberId ne null }"> --%>
+<%--                 <a href="/member/myInfo.do?memberId=${ memberId }"><img src="/resources/images/Icons/user_icon.png" alt="login" class="icons"></a> --%>
+<%--             </c:if> --%>
             <c:if test="${ memberId ne null }">
-                <a href="/member/myInfo.do?memberId=${ memberId }"><img src="/resources/images/Icons/user_icon.png" alt="login" class="icons"></a>
+                <form action="/member/myInfo.do" method="post">
+                    <input type="image" src="/resources/images/Icons/user_icon.png" alt="login" class="icons">
+<!--                     <img src="/resources/images/Icons/user_icon.png" alt="login" class="icons"> -->
+                </form>
             </c:if>
         </li>
     </ul>

@@ -1,11 +1,15 @@
 package dots.of.lots.category.notice.controller;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,46 +19,51 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
 import dots.of.lots.category.notice.domain.Notice;
 import dots.of.lots.category.notice.domain.PageInfo;
+import dots.of.lots.category.notice.domain.Reply;
 import dots.of.lots.category.notice.service.NoticeService;
+import dots.of.lots.category.notice.service.ReplyService;
 
 @Controller
 public class NoticeController {
 	
 	@Autowired
-	private NoticeService service;
-	
+	private NoticeService nService;
+	@Autowired
+	private ReplyService rService;
 	
 	@RequestMapping(value="/notice/list.do", method=RequestMethod.GET)
-	public String selectNoticeList(
-			@RequestParam(value="currentPage", required=false, defaultValue="1") Integer currentPage
-			, Model model) {
+	public ModelAndView selectNoticeList(ModelAndView mv
+			, @RequestParam(value="currentPage", required=false, defaultValue="1") Integer currentPage) {
+		
 		try {
-			int totalCount = service.getListCount();
+			int totalCount = nService.getListCount();
 			PageInfo pInfo = this.getPageInfo(currentPage, totalCount);
 			String result = this.getNaviInfo(currentPage, totalCount);
 			
-			List<Notice> nList = service.selectNoticeList(pInfo);
+			List<Notice> nList = nService.selectNoticeList(pInfo);
 			
 			if(!nList.isEmpty()) {
-				model.addAttribute("pInfo", pInfo);
-				model.addAttribute("nList", nList);
-				model.addAttribute("navi", result);
-				return "category/notice/notice";
+				mv.addObject("pInfo", pInfo);
+				mv.addObject("nList", nList);
+				mv.addObject("navi", result);
+				mv.setViewName("category/notice/notice");
 			} else {
-				model.addAttribute("msg", "데이터가 조회되지 않습니다.");
-				model.addAttribute("url", "/notice/list.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "데이터가 조회되지 않습니다.");
+				mv.addObject("url", "/notice/list.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/notice/list.do");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/notice/list.do");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
 	public PageInfo getPageInfo(int currentPage, int totalCount) {
@@ -65,13 +74,9 @@ public class NoticeController {
 		int startNavi;
 		int endNavi;
 		
-		naviTotalCount = (int)((double)totalCount/recordCountPerPage + 0.9);	// 0 보다 크면 +1하기위한 로직  // 소숫점을 쓰기위해 double을 사용하여 자동형변환, 그 후에 소숫점을 떨구기위해 int로 강제형변환
-			// Math.ceid((double)totalCount/recordCountPerPage)
-			// currentPage 값이 1~5일때 startNavi가 1로 고정되도록 구해주는 식
+		naviTotalCount = (int)((double)totalCount/recordCountPerPage + 0.9);
 		startNavi = (((int)((double)currentPage/naviCountPerPage+0.9))-1) * naviCountPerPage + 1;
 		endNavi = startNavi + naviCountPerPage -1;
-			// endNavi는 startNavi에 무조건 naviCountPerPage 값을 더하므로
-			// 실제 최대값보다 커질 수 있음
 		if(endNavi > naviTotalCount) {
 			endNavi = naviTotalCount;
 		}
@@ -81,15 +86,15 @@ public class NoticeController {
 	}
 	
 	public String getNaviInfo(int currentPage, int totalCount) {
-		boolean needPrev = true;		// 이전 값
-		boolean needNext = true;		// 다음 값
+		boolean needPrev = true;
+		boolean needNext = true;
 		
 		PageInfo pi = this.getPageInfo(currentPage, totalCount);
 		
-		if(pi.getStartNavi() == 1) {			// startNavi 가 1이면 needPrev가 뜨지않게
+		if(pi.getStartNavi() == 1) {
 			needPrev = false;
 		}
-		if(pi.getEndNavi() == pi.getNaviTotalCount()) {	// 마지막 범위의 값이 총 범위의 갯수이면 needNext가 뜨지않게
+		if(pi.getEndNavi() == pi.getNaviTotalCount()) {
 			needNext = false;
 		}
 		StringBuilder result = new StringBuilder();
@@ -97,7 +102,7 @@ public class NoticeController {
 			result.append("<a href='/notice/list.do?currentPage="+(pi.getStartNavi()-1)+"'> < </a> ");
 		}
 		for(int i = pi.getStartNavi(); i <= pi.getEndNavi(); i++) {
-			result.append("<a href='/notice/list.do?currentPage=" + i + "'>" + i + "</a>");	// 범위 만드는 html 태그  // &nbsp; 는 띄어쓰기
+			result.append("<a href='/notice/list.do?currentPage=" + i + "'>" + i + "</a>");
 		}
 		if(needNext) {
 			result.append("<a href='/notice/list.do?currentPage="+(pi.getEndNavi()+1)+"'> > </a>");
@@ -106,190 +111,298 @@ public class NoticeController {
 		return result.toString();
 	}
 	
-	
 	@RequestMapping(value="/notice/search.do", method=RequestMethod.GET)
-	public String searchNoticeList(
-			@RequestParam("searchCondition") String searchCondition
+	public ModelAndView searchNoticeList(ModelAndView mv
+			, @RequestParam("searchCondition") String searchCondition
 			, @RequestParam("searchKeyword") String searchKeyword
-			, @RequestParam(value="currentPage", required=false, defaultValue="1") Integer currentPage
-			, Model model) {
+			, @RequestParam(value="currentPage", required=false, defaultValue="1") Integer currentPage) {
 		
 		Map<String, String> paramMap = new HashMap<String, String>();
 		paramMap.put("searchCondition", searchCondition);
 		paramMap.put("searchKeyword", searchKeyword);
 		
-		int totalCount = service.getListCount(paramMap);
+		int totalCount = nService.getListCount(paramMap);
 		PageInfo pInfo = this.getPageInfo(currentPage, totalCount);
-		String result = this.getNaviInfo(currentPage, totalCount);
+		String result = this.getSearchNaviInfo(pInfo, paramMap);
 		
-		List<Notice> searchList = service.searchNoticesByKeyword(pInfo, paramMap);		
+		List<Notice> searchList = nService.searchNoticesByKeyword(pInfo, paramMap);		
 		
 		if(!searchList.isEmpty()) {
-			model.addAttribute("searchCondition", searchCondition);
-			model.addAttribute("searchKeyword", searchKeyword);
-			model.addAttribute("pInfo", pInfo);
-			model.addAttribute("sList", searchList);
-			model.addAttribute("navi", result);
-			return "category/notice/notice-search";
+			mv.addObject("searchCondition", searchCondition);
+			mv.addObject("searchKeyword", searchKeyword);
+			mv.addObject("pInfo", pInfo);
+			mv.addObject("sList", searchList);
+			mv.addObject("navi", result);
+			mv.setViewName("category/notice/notice-search");
 		} else {
-			model.addAttribute("msg", "데이터 조회가 완료되지 않았습니다.");
-			model.addAttribute("error", "공지사항 제목으로 조회 실패");
-			model.addAttribute("url", "/notice/list.do");
-			return "common/serviceResult";
+			mv.addObject("msg", "데이터 조회가 완료되지 않았습니다.");
+			mv.addObject("url", "/notice/list.do");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
+	public String getSearchNaviInfo(PageInfo pInfo, Map<String, String> paramMap) {
+		boolean needPrev = true;
+		boolean needNext = true;
+		
+		if(pInfo.getStartNavi() == 1) {
+			needPrev = false;
+		}
+		if(pInfo.getEndNavi() == pInfo.getNaviTotalCount()) {
+			needNext = false;
+		}
+		StringBuilder result = new StringBuilder();
+		if(needPrev) {
+			result.append("<a href='/notice/search.do?currentPage="+(pInfo.getStartNavi()-1)+"&searchCondition="+paramMap.get("searchCondition")+"&searchKeyword="+paramMap.get("searchKeyword")+"'> < </a>");
+		}
+		for(int i = pInfo.getStartNavi(); i <= pInfo.getEndNavi(); i++) {
+//			result.append("<a href='/notice/search.do?currentPage=" + i + "'>" + i + "</a>");
+			result.append("<a href='/notice/search.do?currentPage="+i+"&searchCondition="+paramMap.get("searchCondition")+"&searchKeyword="+paramMap.get("searchKeyword")+"'>" +i+ "</a>");
+		}
+		if(needNext) {
+			result.append("<a href='/notice/search.do?currentPage="+(pInfo.getEndNavi()+1)+"&searchCondition="+paramMap.get("searchCondition")+"&searchKeyword="+paramMap.get("searchKeyword")+"'> > </a>");
+		}
+		
+		return result.toString();
+	}
 	
 	@RequestMapping(value="/notice/detail.do", method=RequestMethod.GET)
-	public String selectOneByNo(
-			@RequestParam("noticeNo") int noticeNo
-			, Model model) {
+	public ModelAndView showNoticeDetail(ModelAndView mv
+			, @RequestParam("noticeNo") Integer noticeNo) {
 		
 		try {
-			Notice notice = service.selectOneByNo(noticeNo);
+			Notice notice = nService.selectOneByNo(noticeNo);
 			
 			if(notice != null) {
-				model.addAttribute("notice", notice);
-				return "category/notice/notice-detail";
+				List<Reply> replyList = rService.selectReplyList(noticeNo);
+				if(replyList.size() > 0) {
+					mv.addObject("rList", replyList);
+				}
+				mv.addObject("notice", notice);
+				mv.setViewName("category/notice/notice-detail");
 			} else {
-				model.addAttribute("msg", "데이터가 조회되지 않습니다.");
-				model.addAttribute("url", "/notice/list.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "데이터가 조회되지 않습니다.");
+				mv.addObject("url", "/notice/list.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/notice/list.do");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
-	
 	@RequestMapping(value="/notice/insert.do", method=RequestMethod.GET)
-	public String showInsertForm() {
-		return "category/notice/notice-insert";
+	public ModelAndView showInsertForm(ModelAndView mv
+			, HttpSession session) {
+		
+		try {
+			String noticeWriter = (String)session.getAttribute("memberId");
+			if(noticeWriter != null) {
+				mv.setViewName("category/notice/notice-insert");
+			} else {
+				mv.addObject("msg", "게시글 등록 권한이 없습니다.");
+				mv.addObject("url", "/member/login.do");
+				mv.setViewName("common/serviceResult");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/notice/list.do");
+			mv.setViewName("common/serviceResult");
+		}
+		return mv;
 	}
 	
 	@RequestMapping(value="/notice/insert.do", method=RequestMethod.POST)
-	public String insertNotice(
-			@ModelAttribute Notice notice
+	public ModelAndView insertNotice(ModelAndView mv
+			, @ModelAttribute Notice notice
 			, @RequestParam(value="uploadFile", required=false) MultipartFile uploadFile
 			, HttpServletRequest request
-			, Model model) {
+			, HttpSession session) {
 		
 		try {
-			if(!uploadFile.getOriginalFilename().equals("")) {
-			String fileName = uploadFile.getOriginalFilename();
-			String root = request.getSession().getServletContext().getRealPath("resources");
-			String saveFolder = root + "\\nuploadFiles";
-			File folder = new File(saveFolder);
-			if(!folder.exists()) {
-				folder.mkdir();
-			}
-			String savePath = saveFolder + "\\" + fileName;
-			File file = new File(savePath);
-			uploadFile.transferTo(file);
-			long fileLength = uploadFile.getSize();
-			
-			notice.setNoticeFileName(fileName);
-			notice.setNoticeFIlePath(savePath);
-			notice.setNoticeFileLength(fileLength);
-		}
-		int result = service.insertNotice(notice);
-			
-			if(result > 0) {
-				return "redirect:/notice/list.do";
+			String noticeWriter = (String)session.getAttribute("memberId");
+			if(noticeWriter != null) {
+				notice.setNoticeWriter(noticeWriter);
+				
+				if(uploadFile != null && !uploadFile.getOriginalFilename().equals("")) {
+					Map<String, Object> infoMap = this.saveFile(uploadFile, request);
+					String noticeFileName = (String)infoMap.get("fileName");
+					String noticeFileRename = (String)infoMap.get("fileRename");
+					String noticeFilePath = (String)infoMap.get("filePath");
+					long noticeFileLength = (long)infoMap.get("fileLength");
+					
+					notice.setNoticeFileName(noticeFileName);
+					notice.setNoticeFileRename(noticeFileRename);
+					notice.setNoticeFilePath(noticeFilePath);
+					notice.setNoticeFileLength(noticeFileLength);
+				}
+				int result = nService.insertNotice(notice);
+					
+				if(result > 0) {
+					mv.setViewName("redirect:/notice/list.do");
+				} else {
+					mv.addObject("msg", "공지사항이 등록되지 않았습니다.");
+					mv.addObject("url", "/detail.do");
+					mv.setViewName("common/serviceResult");
+				}
 			} else {
-				model.addAttribute("msg", "공지사항이 등록되지 않았습니다.");
-				model.addAttribute("url", "/detail.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "게시글 등록 권한이 없습니다.");
+				mv.addObject("url", "/member/login.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/notice/list.do");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
+	public Map<String, Object> saveFile(MultipartFile uploadFile, HttpServletRequest request) throws Exception {
+		Map<String, Object> infoMap = new HashMap<String, Object>();
+		
+		String fileName = uploadFile.getOriginalFilename();
+		String root = request.getSession().getServletContext().getRealPath("resources");
+		String saveFolder = root + "//nuploadFiles";
+		File folder = new File(saveFolder);
+		if(!folder.exists()) {
+			folder.mkdir();
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		String strResult = sdf.format(new Date(System.currentTimeMillis()));
+		
+		String ext = fileName.substring(fileName.lastIndexOf(".")+1);
+		String fileRename = "N"+strResult+"."+ext;
+		String savePath = saveFolder + "//" + fileName;
+		File file = new File(savePath);
+		uploadFile.transferTo(file);
+		long fileLength = uploadFile.getSize();
 	
-	@RequestMapping(value="/notice/modify.do", method=RequestMethod.GET)
-	public String showUpdateForm(
-			@RequestParam("noticeNo") int noticeNo
-			, Model model) {
+		infoMap.put("fileName", fileName);
+		infoMap.put("fileRename", fileRename);
+		infoMap.put("filePath", savePath);
+		infoMap.put("fileLength", fileLength);
+		
+		return infoMap;
+	}
+	
+	@RequestMapping(value="/notice/modify.do", method = RequestMethod.GET)
+	public ModelAndView showUpdateForm(ModelAndView mv
+			, @RequestParam("noticeNo") Integer noticeNo) {
 		
 		try {
-			Notice notice = service.selectOneByNo(noticeNo);
-			model.addAttribute("notice", notice);
-			return "category/notice/notice-modify";
+			Notice notice = nService.selectOneByNo(noticeNo);
+			mv.addObject("notice", notice);
+			mv.setViewName("category/notice/notice-modify");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의하세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
 	@RequestMapping(value="/notice/modify.do", method=RequestMethod.POST)
-	public String updateNotice(
-			@ModelAttribute Notice notice
-//			@RequestParam("noticeNo") int noticeNo
-//			, @RequestParam("noticeSubject") String noticeSubject
-//			, @RequestParam("noticeContent") String noticeContent
-			, Model model) {
+	public ModelAndView updateNotice(ModelAndView mv
+			, @ModelAttribute Notice notice
+			, @RequestParam(value="uploadFile", required=false) MultipartFile uploadFile
+			, HttpServletRequest request
+			, HttpSession session) {
 		
-//		Notice notice = new Notice(noticeNo, noticeSubject, noticeContent);
-		
-		
+		String url = "/notice/detail.do?noticeNo="+notice.getNoticeNo();
 		try {
-			int result = service.updateNotice(notice);
-			
-			if(result > 0) {
-				return "redirect:/notice/list.do";
+			String memberId = (String)session.getAttribute("memberId");
+			String noticeWriter = notice.getNoticeWriter();
+			if(noticeWriter != null & noticeWriter.equals(memberId)) {
+				if(uploadFile != null && !uploadFile.getOriginalFilename().equals("")) {
+					String fileName = notice.getNoticeFileRename();
+					if(fileName != null) {
+						this.deleteFile(request, fileName);
+					}
+					Map<String, Object> infoMap = this.saveFile(uploadFile, request);
+					String noticeFileName = (String)infoMap.get("fileName");
+					String noticeFileRename = (String)infoMap.get("fileRename");
+					String noticeFilePath = (String)infoMap.get("filePath");
+					long noticeFileLength = (long)infoMap.get("fileLength");
+					
+					notice.setNoticeFileName(noticeFileName);
+					notice.setNoticeFileRename(noticeFileRename);
+					notice.setNoticeFilePath(noticeFilePath);
+					notice.setNoticeFileLength(noticeFileLength);
+				}
+				int result = nService.updateNotice(notice);
+				
+				if(result > 0) {
+					mv.setViewName("redirect:"+url);
+				} else {
+					mv.addObject("msg", "게시글 수정이 완료되지 않았습니다.");
+					mv.addObject("url", url);
+					mv.setViewName("common/serviceResult");
+				}
 			} else {
-				model.addAttribute("msg", "공지사항 수정이 완료되지 않았습니다.");
-				model.addAttribute("url", "/notice/detail.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "자신의 게시글만 삭제 가능합니다.");
+				mv.addObject("url", url);
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의하세요.");
+			mv.addObject("url", url);
+			mv.setViewName("common/serviceResult");
 		}
-		
+		return mv;
 	}
 	
+	private void deleteFile(HttpServletRequest request, String fileName) {
+		String root = request.getSession().getServletContext().getRealPath("resources");	// 경로 가져오기
+		String delFilePath = root+"/nuploadFiles/"+fileName;
+		File file = new File(delFilePath);
+		if(file.exists()) {
+			file.delete();
+		}
+	}
 	
-	@RequestMapping(value="/notice/delete.do", method=RequestMethod.GET)
-	public String deleteNoticeByNo(
-			@RequestParam("noticeNo") int noticeNo
-			, Model model) {
-		
+	@RequestMapping(value="/notice/delete.do", method = RequestMethod.GET)
+	public ModelAndView deleteNotice(ModelAndView mv
+			, @ModelAttribute Notice notice
+			, HttpSession session) {
 		try {
-			int result = service.deleteNoticeByNo(noticeNo);
-			
-			if(result > 0) {
-				return "redirect:/notice/list.do";
+			String memberId = (String)session.getAttribute("memberId");
+			String noticeWriter = notice.getNoticeWriter();
+			if(noticeWriter != null && noticeWriter.equals(memberId)) {	// 세션 아이디, 작성자 비교
+				int result = nService.deleteNotice(notice);
+				if(result > 0) {
+					mv.setViewName("redirect:/notice/list.do");
+				} else {
+					mv.addObject("msg", "댓글삭제가 완료되지 않았습니다.");
+					mv.addObject("url", "/notice/detail.do");
+					mv.setViewName("common/serviceResult");
+				}
 			} else {
-				model.addAttribute("msg", "공지사항 삭제가 완료되지 않았습니다.");
-				model.addAttribute("url", "/notice/detail.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "자신의 댓글만 삭제 가능합니다.");
+				mv.addObject("error", "댓글 삭제 불가");
+				mv.addObject("url", "/notice/list.do");
+				mv.setViewName("common/errorPage");
 			}
-			
+				
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", e.getMessage());
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
-	
-	
-	
 	
 }

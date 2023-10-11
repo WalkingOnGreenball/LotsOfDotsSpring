@@ -58,40 +58,81 @@
                      <p>
                         ${ notice.noticeContent}
                      </p>
-<!--                      <p> -->
-<!--                         후원일정 안내드립니다. -->
-<!--                         <br> -->
-<!--                         <br> -->
-<!--                         <br> -->
-<!--                         · 5/15 1차 가제본 및 샘플 제작 <br> -->
-<!--                         · 6/5 펀딩 시작일 <br> -->
-<!--                         · 6/15 2차 가제본 및 굿즈 샘플 보완 작업 <br> -->
-<!--                         · 7/5 펀딩 종료일 <br> -->
-<!--                         · 7/22 최종 인쇄 및 제본, 굿즈 발주 <br> -->
-<!--                         · 7/31 포장 및 배송 접수 <br> -->
-<!--                         · 8/7 리워드 수령 <br> -->
-<!--                         <br> -->
-<!--                         <br> -->
-<!--                         자세한 내용은 링크를 확인해주세요! -->
-<!--                         <br> -->
-<!--                         <br> -->
-<!--                         <a href="https://tumblbug.com/lotsofdotsproject1">https://tumblbug.com/lotsofdotsproject1</a> -->
-<!--                      </p> -->
                   </div>
                   <div class="dots_NoticeSubDate">
-                     <c:if test="${ !empty notice.noticeFileName }">첨부파일 있음 /</c:if>
+                     <c:if test="${ !empty notice.noticeFileName }">
+                     	<a href="../resources/nuploadFiles/${ notice.noticeFileRename }" download>${ notice.noticeFileName } /&nbsp;</a>
+                     </c:if>
                      <fmt:formatDate pattern="yyyy-MM-dd" value="${ notice.nUpdateDate }"/>
                   </div>
                </section>
+               
+               <section>
+				<!-- 댓글 목록 -->
+				<table class="dots_ReplyList">
+					<c:forEach var="reply" items="${ rList }">
+						<tr>
+							<td>${ reply.replyWriter }</td>
+							<td>${ reply.replyContent }</td>
+							<td>${ reply.rCreateDate }</td>
+							<td>
+								<c:if test="${ reply.replyWriter eq memberId }">
+									<a href="javascript:void(0);" onclick="showUpdateForm(this, '${ reply.replyContent }');">수정</a>
+									<c:url var="replyDeleteUrl" value="/reply/delete.do">
+										<c:param name="replyNo" 	value="${ reply.replyNo }"></c:param>
+										<c:param name="replyWriter" value="${ reply.replyWriter }"></c:param>	<!-- 본인 것만 지우게 하기 위해 작성자 추가 -->
+										<c:param name="refNoticeNo" value="${ reply.refNoticeNo }"></c:param>		<!-- 성공하면 detail로 가기위한 noticeNo 세팅 -->
+									</c:url>
+									<a href="javascript:void(0);" onclick="deleteReply('${ replyDeleteUrl }');">삭제</a>
+								</c:if>
+							</td>
+						</tr>
+						<tr style="display: none;">
+							<form action="/reply/update.do" method="post">
+								<input type="hidden" name="replyNo" value="${ reply.replyNo }">
+								<input type="hidden" name="refNoticeNo" value="${ reply.refNoticeNo }">
+								<td><input type="submit" value="    Reply    "></td>
+								<td colspan="3"><input type="text" name="replyContent" value="${ reply.replyContent }"></td>
+							</form>
+						</tr>
+					</c:forEach>
+				</table>
+				
+				<!-- 댓글 등록 -->
+				<form action="/reply/insert.do" method="post" class="dots_replyInsertForm">
+					<input type="hidden" name="refNoticeNo" value="${ notice.noticeNo }">
+					<table>
+						<tr>
+							<td>
+								<input type="text" name="replyContent">
+							</td>
+							<td>
+								<input type="submit" value="    Reply    ">
+							</td>
+						</tr>
+					</table>
+				</form>
+               </section>
+				
                <div class="dots_NoticeList">
-                  <a href="/notice/list.do?currentPage=1"><input type="button" value="    List    "></a>
+                  <a href="javascript:void(0)" onclick="javascript:history.go(-1);"><input type="button" value="    List    "></a>
                </div>
-               <div class="dots_NoticeList">
-                  <a href="/notice/modify.do?noticeNo=${ notice.noticeNo }"><input type="button" value="    Update    "></a><br>
-               </div>
-               <div class="dots_NoticeList">
-                  <a href="javascript:void(0)" onclick="deleteCheck();"><input type="button" value="    Delete    "></a><br>
-               </div>
+				<c:url var="updateUrl" value="/notice/modify.do">
+					<c:param name="noticeNo" value="${ notice.noticeNo }"></c:param>
+					<c:param name="noticeWriter" value="${ notice.noticeWriter }"></c:param>
+				</c:url>
+				<c:url var="deleteUrl" value="/notice/delete.do">
+					<c:param name="noticeNo" value="${ notice.noticeNo }"></c:param>
+					<c:param name="noticeWriter" value="${ notice.noticeWriter }"></c:param>
+				</c:url>
+				<c:if test="${ notice.noticeWriter eq memberId }">
+	               <div class="dots_NoticeList">
+	                  <a href="javascript:void(0)" onclick="updateCheck('${ updateUrl }');"><input type="button" value="    Update    "></a><br>
+	               </div>
+	               <div class="dots_NoticeList">
+	                  <a href="javascript:void(0)" onclick="deleteCheck('${ deleteUrl }');"><input type="button" value="    Delete    "></a><br>
+	               </div>
+				</c:if>
                <section class="dots_Noticebutton">
                   <input type="button" value="<">
 <!--                   <input type="button" value="1"> -->
@@ -114,12 +155,22 @@
                   document.querySelector("#shopping_bag").style.display = "none";
             })
          });
- 		const deleteCheck = () => {
- 			const noticeNo = '${ notice.noticeNo}';
+ 		function deleteCheck(url) {
  			if(confirm("삭제하시겠습니까?")) {
- 				location.href = "/notice/delete.do?noticeNo=" + noticeNo;
+ 				location.href = url;
  			}
  		}
+ 		function updateCheck(url) {
+			location.href = url;
+ 		}
+ 		function showUpdateForm(obj, replyContent){
+			obj.parentElement.parentElement.nextElementSibling.style.display="";
+		}
+ 		function deleteReply(url) {
+ 			if(confirm("삭제하시겠습니까?")) {
+ 				location.href = url;
+ 			}
+		}
       </script>
    </body>
 </html>

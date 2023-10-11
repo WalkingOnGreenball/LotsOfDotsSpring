@@ -16,6 +16,8 @@ public interface NoticeStore {
 
 	public int deleteNoticeByNo(SqlSession sqlSession, int noticeNo);
 
+	public int deleteNotice(SqlSession sqlSession, Notice notice);
+
 	public Notice selectOneByNo(SqlSession sqlSession, int noticeNo);
 
 	public int getListCount(SqlSession sqlSession);

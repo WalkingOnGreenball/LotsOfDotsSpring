@@ -19,5 +19,5 @@ public interface MemberStore {
 	public Member findId(SqlSession sqlSession, Member member);
 
 	public Member findPw(SqlSession sqlSession, Member member);
-	
+
 }

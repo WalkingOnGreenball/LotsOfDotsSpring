@@ -56,7 +56,7 @@
                         <input type="text" name="noticeSubject" id="" placeholder="제목">
                      </div>
                      <div class="dots_NoticeSubWrite">
-                           <textarea name="noticeContent" id="" cols="154" rows="20" placeholder="내용을 입력하세요."></textarea>
+                        <textarea name="noticeContent" id="" cols="154" rows="20" placeholder="내용을 입력하세요."></textarea>
                      </div>
                      <div class="dots_NoticeUploadFile">
 						<input type="file" name="uploadFile">

@@ -28,9 +28,21 @@ public class NoticeStoreLogic implements NoticeStore{
 
 	@Override
 	public int deleteNoticeByNo(SqlSession sqlSession, int noticeNo) {
-		int result = sqlSession.insert("NoticeMapper.deleteNoticeByNo", noticeNo);
+		int result = sqlSession.delete("NoticeMapper.deleteNoticeByNo", noticeNo);
 		return result;
 	}
+
+	@Override
+	public int deleteNotice(SqlSession sqlSession, Notice notice) {
+		int result = sqlSession.update("NoticeMapper.deleteNotice", notice);
+		return result;
+	}
+	
+//	@Override
+//	public int deleteNotice(SqlSession sqlSession, Notice notice) {
+//		int result = sqlSession.delete("NoticeMapper.deleteNotice", notice);
+//		return result;
+//	}
 
 	@Override
 	public Notice selectOneByNo(SqlSession sqlSession, int noticeNo) {

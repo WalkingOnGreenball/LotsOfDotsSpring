@@ -55,9 +55,10 @@
                            비밀번호 : <input type="password" name="memberPw" placeholder=" 비밀번호를 입력해주세요." class="Login_Blank" required><br>
                            비밀번호 확인 : <input type="password" name="memberPwCheck" placeholder=" 비밀번호를 확인해주세요." class="Login_Blank" required><br>
                            이름 : <input type="text" name="memberName" placeholder=" 이름을 입력해주세요." class="Login_Blank" required><br>
-                           주소 : <input type="text" name="memberAddress"  placeholder=" 주소를 입력해주세요." class="Login_Blank" required><br>
+                           주소 : <input type="text" id="memberAddress" name="memberAddress" placeholder=" 주소를 입력해주세요." class="Login_Blank" required><br>
+                           <input type="button" onclick="sample4_execDaumPostcode();" value="우편번호 찾기" class="Login_Blank findAddressButton"><br>
                            이메일 : <input type="email" name="memberEmail"  placeholder=" 이메일을 입력해주세요." class="Login_Blank" required><br>
-                           전화번호 : <input type="tel" name="memberPhone" placeholder=" 번호를 입력해주세요." class="Login_Blank" required><br>
+                           전화번호 : <input type="number" name="memberPhone" placeholder=" 번호를 입력해주세요." class="Login_Blank" required><br>
                            <div class="sign_radioBox">
                               성별 : 
                               <input type="radio" name="memberGender" class="sign_radio" value="Male">
@@ -80,6 +81,16 @@
          <!-- footer -->
          <jsp:include page="/WEB-INF/views/include/footer.jsp"></jsp:include>
       </div>
+      <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+      <script>
+         function sample4_execDaumPostcode() {
+            new daum.Postcode({
+	            oncomplete : function(data) {
+	               document.querySelector("#memberAddress").value = "(" + data.zonecode + ") " + data.roadAddress + ", " + data.buildingName;
+	            }
+            }).open();
+         }
+      </script>
       <script>
          document.addEventListener("DOMContentLoaded", () => {
             document.querySelector("#shopping_bag_icon").addEventListener("click", () => {

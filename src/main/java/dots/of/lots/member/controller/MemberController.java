@@ -1,5 +1,7 @@
 package dots.of.lots.member.controller;
 
+import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import dots.of.lots.member.domain.Member;
@@ -23,185 +26,261 @@ public class MemberController {
 	@Autowired
 	private MemberService service;
 	
-	
 	@RequestMapping(value="/member/register.do", method=RequestMethod.GET)
-	public String showRegisterForm(Model model) {
-		return "member/sign";
+	public ModelAndView showRegisterForm(ModelAndView mv) {
+		mv.setViewName("member/sign");
+		return mv;
 	}
 	
 	@RequestMapping(value="/member/register.do", method=RequestMethod.POST)
-	public String insertMember(
-			@ModelAttribute Member member
-			, Model model) {
+	public ModelAndView insertMember(ModelAndView mv
+			, @ModelAttribute Member mOne) {
+		
+		Member member = this.checkLoginItems(mOne);
 		
 		try {
-			int result = service.insertMember(member);
-			
-			if(result > 0) {
-				model.addAttribute("msg", "회원가입에 성공했어요.");
-				model.addAttribute("url", "/member/login.do");
-				return "common/serviceResult";
+			if(member != null) {
+				int result = service.insertMember(member);
+				if(result > 0) {
+					mv.setViewName("redirect:/member/login.do");
+				} else {
+					mv.addObject("msg", "회원가입이 완료되지 않았습니다.");
+					mv.addObject("url", "/member/login.do");
+					mv.setViewName("common/serviceResult");
+				}
 			} else {
-				model.addAttribute("msg", "회원가입이 완료되지 않았습니다.");
-				model.addAttribute("url", "/member/login.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "정보를 정확히 입력해주세요.");
+				mv.addObject("url", "/member/login.do");
+				mv.setViewName("common/serviceResult");
 			}
-			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/member/login.do");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
+	public Member checkLoginItems(Member mOne) {
+		boolean regex = true;
+			
+		if(!mOne.getMemberPw().equals(mOne.getMemberPwCheck()) ) {
+			// 비밀번호가 비밀번호 체크와 같은지 확인
+			mOne = null;
+			return mOne;
+			
+		} else if(mOne.getMemberPw() == null || "".equals(mOne.getMemberPw())) {
+			// 비밀번호가 null 인지, 띄어쓰기가 있는지
+			mOne = null;
+			return mOne;
+			
+		} else if(regex = Pattern.matches("^[a-z0-9]*$", mOne.getMemberId())) {
+			// 아이디에 영어, 숫자만 넣었는지
+			if(regex = true) {
+				return mOne;
+			} else {
+				mOne = null;
+				return mOne;
+			}
+			
+		} else if(regex = Pattern.matches("^01(?:0|1|[6-9])-(?:\\\\d{3}|\\\\d{3})-\\\\d{4}$", mOne.getMemberPhone())) {
+			// 핸드폰번호 확인
+			if(regex = true) {
+				return mOne;
+			} else {
+				mOne = null;
+				return mOne;
+			}
+			
+		} else if(regex = Pattern.matches("^[a-zA-z0-9]+@[a-zA-Z0-9]+\\\\.[a-z]+$", mOne.getMemberEmail())) {
+			// 이메일 확인
+			if(regex = true) {
+				return mOne;
+			} else {
+				mOne = null;
+				return mOne;
+			}
+		}
+		return mOne;
+	}
 	
+	@RequestMapping(value="/member/myInfo.do", method= {RequestMethod.GET, RequestMethod.POST})
+	public ModelAndView showMypageForm(ModelAndView mv
+			, HttpSession session) {
+		
+		try {
+			String memberId = (String)session.getAttribute("memberId");
+			Member member = null;
+			if(memberId != "" && memberId != null) {
+				member = service.selectOneById(memberId);
+			}
+			
+			if(member != null) {
+				mv.addObject("member", member);
+				mv.setViewName("member/myInfo");
+			} else {
+				mv.addObject("msg", "조회가 완료되지 않았습니다.");
+				mv.addObject("url", "/member/findPw.do");
+				mv.setViewName("common/serviceResult");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
+		}
+		return mv;
+	}
+
 	@RequestMapping(value="/member/update.do", method=RequestMethod.GET)
-	public String showUpdateView(
-			@RequestParam("memberId") String memberId
-			,Model model) {
+	public ModelAndView showUpdateView(ModelAndView mv
+			, @RequestParam("memberId") String memberId) {
 		
 		try {
 			Member member = service.selectOneById(memberId);
 			
 			if(member != null) {
-				model.addAttribute("member", member);
-				return "member/myInfo";
+				mv.addObject("member", member);
+				mv.setViewName("member/myInfo");
 			} else {
-				model.addAttribute("msg", "조회가 완료되지 않았습니다.");
-				model.addAttribute("url", "/member/update.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "조회가 완료되지 않았습니다.");
+				mv.addObject("url", "/member/update.do");
+				mv.setViewName("common/serviceResult");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
 	@RequestMapping(value="/member/update.do", method=RequestMethod.POST)
-	public String updateMember(
-			@ModelAttribute Member member
-			, RedirectAttributes redirect
-			, Model model) {
+	public ModelAndView updateMember(ModelAndView mv
+			, @ModelAttribute Member member
+			, @RequestParam("memberId") String memberId) {
 		
 		try {
-			int result = service.updateMember(member);
-			
-			if(result > 0) {
-				redirect.addAttribute("memberId", member.getMemberId());
-				model.addAttribute("msg", "업데이트 성공");
-				model.addAttribute("url", "/member/myInfo.do?memberId="+member.getMemberId());
-				return "common/serviceResult";
+			Member mOne = service.selectOneById(memberId);
+			if(member.getMemberPw().equals(member.getMemberPwCheck()) && member.getMemberPw().equals(mOne.getMemberPw())) {
+				int result = service.updateMember(member);
+				if(result > 0) {
+					mv.addObject("msg", "업데이트 성공");
+					mv.addObject("url", "/member/myInfo.do");
+					mv.setViewName("common/serviceResult");
+				} else {
+					mv.addObject("msg", "업데이트 실패");
+					mv.addObject("url", "/member/update.do");
+					mv.setViewName("common/serviceResult");
+				}
 			} else {
-				model.addAttribute("msg", "업데이트 실패");
-				model.addAttribute("url", "/member/myInfo.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "비밀번호가 다릅니다.");
+				mv.addObject("url", "/member/update.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
-		
+		return mv;
 	}
-	
 	
 	@RequestMapping(value="/member/delete.do", method=RequestMethod.GET)
-	public String deleteMember(
-			@RequestParam("memberId") String memberId
-			, Model model) {
+	public ModelAndView deleteMember(ModelAndView mv
+			, @RequestParam("memberId") String memberId
+			, @ModelAttribute Member member) {
 		
 		try {
-			int result = service.deleteMember(memberId);
-			
-			if(result > 0) {
-				return "redirect:/member/logout.do";
+			Member mOne = service.selectOneById(memberId);
+			if(member.getMemberPw().equals(member.getMemberPwCheck()) && member.getMemberPw().equals(mOne.getMemberPw())) {
+				int result = service.deleteMember(memberId);
+				if(result > 0) {
+					mv.setViewName("redirect:/member/logout.do");
+				} else {
+					mv.addObject("msg", "회원삭제에 실패하였습니다.");
+					mv.addObject("url", "/member/myInfo.do");
+					mv.setViewName("common/serviceResult");
+				}
 			} else {
-				model.addAttribute("msg", "회원삭제에 실패하였습니다.");
-				model.addAttribute("url", "/member/myInfo.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "비밀번호가 다릅니다.");
+				mv.addObject("url", "/member/update.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
-	
 	@RequestMapping(value="/member/login.do", method=RequestMethod.GET)
-	public String showLoginForm(Model model) {
-		return "member/login";
+	public ModelAndView showLoginForm(ModelAndView mv) {
+		mv.setViewName("member/login");
+		return mv;
 	}
 	
 	@RequestMapping(value="/member/login.do", method=RequestMethod.POST)
-	public String memberLogin(
-			@RequestParam("memberId") String memberId
-			, @RequestParam("memberPw") String memberPw
-			, Model model) {
+	public ModelAndView memberLogin(ModelAndView mv
+			, @ModelAttribute Member member) {
 		
 		try {
-			Member member = new Member(memberId, memberPw);
 			Member mOne = service.selectCheckLogin(member);
 			
 			if(mOne != null) {
-				model.addAttribute("memberId", mOne.getMemberId());
-				model.addAttribute("memberName", mOne.getMemberName());
-				
-				model.addAttribute("msg", "로그인 성공!");
-				model.addAttribute("url", "/member/myInfo.do?memberId="+memberId);
-				return "common/serviceResult";
+				mv.addObject("memberId", mOne.getMemberId());
+				mv.addObject("memberName", mOne.getMemberName());
+				mv.setViewName("redirect:/index.jsp");
 			} else {
-				model.addAttribute("msg", "로그인에 실패하였습니다.");
-				model.addAttribute("url", "/member/login.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "로그인이 완료되지 않았습니다.");
+				mv.addObject("url", "/member/login.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
-	
 	
 	@RequestMapping(value="/member/logout.do", method=RequestMethod.GET)
-	public String memberLogout(
-			HttpSession sessionPrev
-			, SessionStatus session
-			, Model model) {
+	public ModelAndView memberLogout(ModelAndView mv
+			, HttpSession sessionPrev
+			, SessionStatus session) {
 		
 		if(session != null) {
-			session.setComplete();
-			if(session.isComplete()) {
-				// 세션 만료 유효성 체크
+			session.setComplete(); 		// 만료 시킴
+			if(session.isComplete()) {	// 만료 되었는지 체크
+				mv.setViewName("redirect:/member/login.do");
 			}
-			return "redirect:/member/login.do";
 		} else {
-			model.addAttribute("msg", "로그아웃에 실패하였습니다.");
-			model.addAttribute("url", "/member/login.do");
-			return "common/serviceResult";
+			mv.addObject("msg", "로그아웃에 실패하였습니다.");
+			mv.addObject("url", "/member/myInfo.do");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
-	
 	@RequestMapping(value="/member/findId.do", method=RequestMethod.GET)
-	public String showFindIdForm(Model model) {
-		return "member/finding-Id";
+	public ModelAndView showFindIdForm(ModelAndView mv) {
+		mv.setViewName("member/finding-Id");
+		return mv;
 	}
 	
 	@RequestMapping(value="/member/findId.do", method=RequestMethod.POST)
-	public String findId(
-			@RequestParam("memberEmail") String memberEmail
-			, @RequestParam("memberPhone") String memberPhone
-			, Model model) {
+	public ModelAndView findId(ModelAndView mv
+			, @RequestParam("memberEmail") String memberEmail
+			, @RequestParam("memberPhone") String memberPhone) {
 		
 		try {
 			Member member = new Member();
@@ -211,36 +290,35 @@ public class MemberController {
 			Member mOne = service.findId(member);
 			
 			if(mOne != null) {
-				model.addAttribute("member", mOne);
-
-				model.addAttribute("msg", "아이디는 " + mOne.getMemberId() + " 입니다.");
-				model.addAttribute("url", "/member/login.do");
-				return "common/serviceResult";
+				mv.addObject("member", mOne);
+				mv.addObject("msg", "아이디는 " + mOne.getMemberId() + " 입니다.");
+				mv.addObject("url", "/member/login.do");
+				mv.setViewName("common/serviceResult");
 			} else {
-				model.addAttribute("msg", "조회가 완료되지 않았습니다.");
-				model.addAttribute("url", "/member/findId.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "조회가 완료되지 않았습니다.");
+				mv.addObject("url", "/member/findId.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
+		return mv;
 	}
 	
-	
 	@RequestMapping(value="/member/findPw.do", method=RequestMethod.GET)
-	public String showFindPwForm(Model model) {
-		return "member/finding-Pw";
+	public ModelAndView showFindPwForm(ModelAndView mv) {
+		mv.setViewName("member/finding-Pw");
+		return mv;
 	}
 	
 	@RequestMapping(value="/member/findPw.do", method=RequestMethod.POST)
-	public String findPw(
-			@RequestParam("memberId") String memberId
-			, @RequestParam("memberPhone") String memberPhone
-			, Model model) {
+	public ModelAndView findPw(ModelAndView mv
+			, @RequestParam("memberId") String memberId
+			, @RequestParam("memberPhone") String memberPhone) {
 		
 		try {
 			Member member = new Member();
@@ -250,50 +328,23 @@ public class MemberController {
 			Member mOne = service.findPw(member);
 			
 			if(mOne != null) {
-				model.addAttribute("member", mOne);
-
-				model.addAttribute("msg", "비밀번호는 " + mOne.getMemberPw() + " 입니다.");
-				model.addAttribute("url", "/member/login.do");
-				return "common/serviceResult";
+				mv.addObject("member", mOne);
+				mv.addObject("msg", "비밀번호는 " + mOne.getMemberPw() + " 입니다.");
+				mv.addObject("url", "/member/login.do");
+				mv.setViewName("common/serviceResult");
 			} else {
-				model.addAttribute("msg", "조회가 완료되지 않았습니다.");
-				model.addAttribute("url", "/member/findPw.do");
-				return "common/serviceResult";
+				mv.addObject("msg", "조회가 완료되지 않았습니다.");
+				mv.addObject("url", "/member/findPw.do");
+				mv.setViewName("common/serviceResult");
 			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
+			mv.addObject("msg", "관리자에게 문의해주세요.");
+			mv.addObject("url", "/index.jsp");
+			mv.setViewName("common/serviceResult");
 		}
-	}
-	
-	
-	@RequestMapping(value="/member/myInfo.do", method=RequestMethod.GET)
-	public String showDetailMember(
-			@RequestParam("memberId") String memberId
-			, Model model) {
-		
-		try {
-			Member member = service.selectOneById(memberId);
-			
-			if(member != null) {
-				model.addAttribute("member", member);
-				return "member/myInfo";
-				
-			} else {
-				model.addAttribute("msg", "조회가 완료되지 않았습니다.");
-				model.addAttribute("url", "/member/login.do");
-				return "common/serviceResult";
-			}
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			model.addAttribute("msg", e.getMessage());
-			model.addAttribute("url", "/index.jsp");
-			return "common/serviceResult";
-		}
+		return mv;
 	}
 	
 }

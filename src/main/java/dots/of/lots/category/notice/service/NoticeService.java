@@ -23,11 +23,18 @@ public interface NoticeService {
 	public int updateNotice(Notice notice);
 
 	/**
-	 * 공지 삭제
+	 * 공지 번호로 삭제
 	 * @param noticeNo
 	 * @return
 	 */
 	public int deleteNoticeByNo(int noticeNo);
+
+	/**
+	 * 공지 삭제
+	 * @param notice
+	 * @return
+	 */
+	public int deleteNotice(Notice notice);
 
 	/**
 	 * 공지 번호로 조회

@@ -3,14 +3,21 @@
   PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
+
+  <settings>
+  	<setting name="jdbcTypeForNull" value="NULL"/>
+  </settings>
+
   <typeAliases>
   	<typeAlias type="dots.of.lots.member.domain.Member" alias="Member"/>
   	<typeAlias type="dots.of.lots.category.notice.domain.Notice" alias="Notice"/>
+  	<typeAlias type="dots.of.lots.category.notice.domain.Reply" alias="Reply"/>
   </typeAliases>
   
   <mappers>
     <mapper resource="mappers/member-mapper.xml"/>
     <mapper resource="mappers/notice-mapper.xml"/>
+    <mapper resource="mappers/reply-mapper.xml"/>
   </mappers>
   
 </configuration>

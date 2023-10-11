@@ -5,7 +5,6 @@
 <mapper namespace="MemberMapper">
 
   <resultMap type="Member" id="memberResultMap">
-  
   	<result property="memberId" 		column="MEMBER_ID"/>
   	<result property="memberPw" 		column="MEMBER_PW"/>
   	<result property="memberPwCheck" 	column="MEMBER_PW_CHECK"/>
@@ -17,7 +16,6 @@
   	<result property="memberDate" 		column="MEMBER_DATE"/>
   	<result property="updateDate" 		column="UPDATE_DATE"/>
   	<result property="memberYn" 		column="MEMBER_YN"/>
-  
   </resultMap>
 
   <insert id="insertMember">
